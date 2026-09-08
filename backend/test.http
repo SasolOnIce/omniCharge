@@ -1,0 +1,6 @@
+POST http://localhost:3000/partition
+Content-Type: application/json
+
+{
+  "totalAmount": 125.50
+}
