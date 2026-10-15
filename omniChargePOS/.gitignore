@@ -1,0 +1,9 @@
+node_modules/
+/android/
+.expo/
+expo-env.d.ts
+dist/
+.env*.local
+*.tsbuildinfo
+*.jks
+*.keystore

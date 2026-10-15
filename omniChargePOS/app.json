@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "omniCharge POS Simulator",
+    "slug": "omniChargePOS",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "omnichargepos",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.omnicharge.pos",
+      "permissions": ["android.permission.NFC"]
+    },
+    "plugins": ["./plugins/with-pos-hce"]
+  }
+}

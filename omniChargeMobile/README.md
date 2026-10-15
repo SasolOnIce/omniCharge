@@ -1,56 +1,115 @@
-# Welcome to your Expo app 👋
+# omniCharge Wallet
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The customer-side Android prototype receives a payment request from the
+separately installed omniCharge POS Simulator app by scanning its QR code or
+tapping the POS phone with NFC. It previews how one amount would be allocated
+across simulated card balances; when approved, the backend settles the
+simulated split atomically.
 
-## Get started
+**Simulation only:** these are shared in-memory demo balances. The apps do not
+connect to banks, read actual card balances, or initiate real card payments.
+The QR flow is currently initiated by the POS app; peer-to-peer payment
+requests are a future feature, not part of this prototype.
 
-1. Install dependencies
+## Run with the POS Simulator
+
+1. In a terminal from the repository root, start the shared backend:
+
+   ```bash
+   cd backend
+   cp .env.example .env
+   npm install
+   npm start
+   ```
+
+   For testing from phones, forward backend port 3000 and make it accessible
+   to both phones.
+2. In a second terminal from the repository root, configure and start the wallet:
+
+   ```bash
+   cd omniChargeMobile
+   cp .env.example .env.local
+   ```
+
+   Set `EXPO_PUBLIC_API_URL` in `.env.local` to the reachable HTTPS URL for the
+   backend, then run:
 
    ```bash
    npm install
+   npx expo start --dev-client --tunnel --port 8081
    ```
 
-2. Start the app
+3. In a third terminal from the repository root, configure and start the POS app:
 
    ```bash
-   npx expo start
+   cd omniChargePOS
+   cp .env.example .env.local
    ```
 
-In the output, you'll find options to open the app in a
+   Set the same `EXPO_PUBLIC_API_URL` in `.env.local`, then run:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npm install
+   npx expo start --dev-client --tunnel --port 8082
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+4. Install each app's **development APK** (see below) on an NFC-capable Android
+   phone. Open the app's development build and connect to its corresponding
+   Metro server/QR. Expo Go cannot run NFC features. Both apps and the backend
+   must remain running.
 
-## Get a fresh project
+On the POS, choose QR or NFC before creating the sale request. In the wallet,
+scan the POS QR or choose **Tap POS phone with NFC** and hold the unlocked
+phones together. Both phones need NFC enabled; the POS phone must support host
+card emulation. QR remains available if NFC is unsupported.
 
-When you're ready, run:
+For reference, the wallet configuration contains
+`EXPO_PUBLIC_API_URL=https://YOUR-CODESPACE-NAME-3000.app.github.dev`. Use a
+URL that the phones can reach; `localhost` on a phone refers to that phone,
+not the development computer. Keep local `.env` files private and never place
+provider secrets in `EXPO_PUBLIC_` variables.
+
+The backend demo account starts with R50, R300, and R200. For a R60 sale, the
+wallet previews R50 from Demo Card 1 and R10 from Demo Card 2. Use **Reset demo
+balances** in the wallet to start the example over.
+
+## Installable Android APK
+
+Create a custom NFC-capable development APK from this directory:
 
 ```bash
-npm run reset-project
+npx eas-cli build --platform android --profile development
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Install that APK on the wallet phone. Build/install the separate POS development
+APK from `../omniChargePOS`. Each custom app build is required because NFC uses
+native Android code, which Expo Go does not include. Use `npx eas-cli build
+--platform android --profile preview` later to make a standalone release-style
+APK.
 
-### Other setup steps
+For local native builds, run `npx expo prebuild --platform android` and
+`npx expo run:android` from each app directory with Android Studio/SDK installed.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Future integrations
 
-## Learn more
+The current API preview is a simulator, not an actual bank balance check.
+Balance access and card payment authorization are separate capabilities. No
+publicly documented South African sandbox with bank-issued test accounts and
+available-balance data has been confirmed for this prototype. Even where
+balance information is available, it can be stale and does not guarantee that a
+later card authorization will succeed.
 
-To learn more about developing your project with Expo, look at the following resources:
+The demo performs an all-or-nothing in-memory balance update to illustrate the
+desired UX. A real multi-card payment requires a payment provider/acquirer that
+supports separate authorizations for each allocation and a coordinated
+authorize-then-capture or reversal flow. Card charges are not inherently
+atomic, and balance checks alone cannot guarantee against partial real charges.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [Standard Bank API Developer Portal](https://developer.standardbank.co.za/)
+- [Absa Access Developer Portal](https://developer.absa.africa/)
+- [Stitch Pay By Bank](https://docs.stitch.money/payment-products/payins/paybybank/introduction)
+- [Yoco Checkout API testing](https://yoco.docs.buildwithfern.com/docs/checkout-api/testing)
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Stitch Pay By Bank documents payment initiation, not balance lookup. Yoco
+Checkout API creates a single hosted checkout and is not used as a multi-card
+split-payment provider in this prototype.
