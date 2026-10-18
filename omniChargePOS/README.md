@@ -33,30 +33,20 @@ not implemented yet.
 
    ```bash
    npm install
-   npx expo start --dev-client --tunnel --port 8082
+   npx expo start --go --tunnel --port 8082
    ```
 
-3. Create and install this POS app's custom development APK:
-
-   ```bash
-   npx eas-cli build --platform android --profile development
-   ```
-
-4. Create/install the Wallet development APK described in
-   `../omniChargeMobile/README.md`, configured with the same API URL. Open each
-   app on its own phone. Both apps and the backend must remain running.
+3. Install Expo Go on both phones and scan each app's Metro QR code. Keep both
+   Expo servers and the backend running. Create a sale in POS, then scan its
+   payment QR in Wallet to review and approve the simulated split.
 
 The demo starts with balances of R50, R300, and R200. For a R60 request, the
 wallet previews a R50 allocation from Demo Card 1 and R10 from Demo Card 2. The
 backend only changes balances after the customer explicitly approves.
 
-The POS phone uses Android Host Card Emulation to present the opaque request ID
-as a custom NFC application. The Wallet phone reads that ID over ISO-DEP and
-fetches the request and amount from the backend before showing the approval
-screen. The amount or payment approval is never carried over NFC. Both phones
-must support NFC; the POS phone must also support host card emulation.
+Payment requests are delivered through QR codes only.
 
-## Build installable Android APKs
+## Optional standalone Android APK
 
 From this directory, run:
 
@@ -64,8 +54,8 @@ From this directory, run:
 npx eas-cli build --platform android --profile development
 ```
 
-This custom development build includes the native HCE service. Use the
-`preview` profile for a release-style APK after testing.
+Use the `preview` profile for a standalone APK. The QR-only demo can also be
+tested in Expo Go without a custom native development build.
 
 For local native builds, run `npx expo prebuild --platform android` and
 `npx expo run:android` from this directory with Android Studio/SDK installed.

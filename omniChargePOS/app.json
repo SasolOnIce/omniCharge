@@ -7,9 +7,7 @@
     "scheme": "omnichargepos",
     "userInterfaceStyle": "dark",
     "android": {
-      "package": "com.omnicharge.pos",
-      "permissions": ["android.permission.NFC"]
-    },
-    "plugins": ["./plugins/with-pos-hce"]
+      "package": "com.omnicharge.pos"
+    }
   }
 }

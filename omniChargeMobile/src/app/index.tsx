@@ -1,6 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import NfcManager, { NfcTech } from 'react-native-nfc-manager';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -66,11 +65,9 @@ export default function Home() {
   const [cards, setCards] = useState<Card[]>([]);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [nfcReading, setNfcReading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const nfcScanActive = useRef(false);
 
   const loadCards = useCallback(async () => {
     const apiBaseUrl = getApiBaseUrl();
@@ -132,69 +129,6 @@ export default function Home() {
         setError(err instanceof Error ? err.message : 'Could not load the payment request.');
       })
       .finally(() => setLoading(false));
-  };
-
-  const startNfcPaymentRequestRead = async () => {
-    if (nfcScanActive.current) return;
-    nfcScanActive.current = true;
-    setNfcReading(true);
-    setError('');
-    setNotice('');
-
-    let technologyRequested = false;
-    let requestId: string | null = null;
-    let scanError: unknown;
-    try {
-      await NfcManager.start();
-      technologyRequested = true;
-      await NfcManager.requestTechnology(NfcTech.IsoDep);
-
-      const selectResponse = await NfcManager.isoDepHandler.transceive([
-        0x00, 0xA4, 0x04, 0x00, 0x07, 0xf0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-      ]);
-      if (selectResponse.length < 2 || selectResponse.at(-2) !== 0x90 || selectResponse.at(-1) !== 0x00) {
-        throw new Error('No omniCharge POS payment request found. Tap the POS phone and try again.');
-      }
-
-      const response = await NfcManager.isoDepHandler.transceive([0x80, 0xca, 0x00, 0x00, 0x00]);
-      if (response.length < 2 || response.at(-2) !== 0x90 || response.at(-1) !== 0x00) {
-        throw new Error('The POS phone has no active payment request.');
-      }
-      const payload = String.fromCharCode(...response.slice(0, -2));
-      requestId = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(payload)
-        ? payload
-        : null;
-      if (!requestId) throw new Error('The POS sent an invalid payment request. Try scanning its QR code.');
-    } catch (err) {
-      scanError = err;
-    } finally {
-      if (technologyRequested) {
-        try {
-          await NfcManager.cancelTechnologyRequest();
-        } catch (cleanupError) {
-          scanError = scanError
-            ? new Error(`${scanError instanceof Error ? scanError.message : 'NFC read failed'} NFC cleanup also failed: ${cleanupError instanceof Error ? cleanupError.message : 'unknown error'}`)
-            : cleanupError;
-        }
-      }
-      nfcScanActive.current = false;
-      setNfcReading(false);
-    }
-
-    if (scanError) {
-      setError(scanError instanceof Error ? scanError.message : 'NFC read failed. Keep the phones together and retry.');
-      return;
-    }
-    if (!requestId) return;
-
-    setLoading(true);
-    try {
-      await loadPaymentRequest(requestId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load the payment request from the POS.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handlePay = async () => {
@@ -276,17 +210,6 @@ export default function Home() {
       <TouchableOpacity style={styles.button} onPress={startScan} disabled={loading}>
         <Text style={styles.buttonText}>Scan POS payment QR</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.nfcButton}
-        onPress={startNfcPaymentRequestRead}
-        disabled={loading || nfcReading || Platform.OS !== 'android'}>
-        {nfcReading ? (
-          <ActivityIndicator color="#f8fafc" />
-        ) : (
-          <Text style={styles.nfcButtonText}>Tap POS phone with NFC</Text>
-        )}
-      </TouchableOpacity>
-      <Text style={styles.helpText}>NFC requires the custom Android development build and NFC enabled on both phones.</Text>
 
       {scanning ? (
         <View style={styles.scanner}>
@@ -364,9 +287,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: '#f8fafc', fontWeight: '600' },
   button: { backgroundColor: '#38bdf8', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
-  nfcButton: { backgroundColor: '#334155', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-  nfcButtonText: { color: '#f8fafc', fontWeight: 'bold', fontSize: 16 },
-  helpText: { color: '#94a3b8', fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 10 },
   scanner: { height: 300, marginTop: 20, overflow: 'hidden', borderRadius: 8 },
   camera: { flex: 1 },
   spinner: { marginTop: 16 },

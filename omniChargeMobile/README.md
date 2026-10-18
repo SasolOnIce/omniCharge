@@ -1,10 +1,9 @@
 # omniCharge Wallet
 
 The customer-side Android prototype receives a payment request from the
-separately installed omniCharge POS Simulator app by scanning its QR code or
-tapping the POS phone with NFC. It previews how one amount would be allocated
-across simulated card balances; when approved, the backend settles the
-simulated split atomically.
+separately installed omniCharge POS Simulator app by scanning its QR code. It
+previews how one amount would be allocated across simulated card balances; when
+approved, the backend settles the simulated split atomically.
 
 **Simulation only:** these are shared in-memory demo balances. The apps do not
 connect to banks, read actual card balances, or initiate real card payments.
@@ -36,7 +35,7 @@ requests are a future feature, not part of this prototype.
 
    ```bash
    npm install
-   npx expo start --dev-client --tunnel --port 8081
+   npx expo start --go --tunnel --port 8081
    ```
 
 3. In a third terminal from the repository root, configure and start the POS app:
@@ -50,18 +49,14 @@ requests are a future feature, not part of this prototype.
 
    ```bash
    npm install
-   npx expo start --dev-client --tunnel --port 8082
+   npx expo start --go --tunnel --port 8082
    ```
 
-4. Install each app's **development APK** (see below) on an NFC-capable Android
-   phone. Open the app's development build and connect to its corresponding
-   Metro server/QR. Expo Go cannot run NFC features. Both apps and the backend
-   must remain running.
+4. Install Expo Go on both phones and scan each app's Metro QR code. Keep both
+   Expo servers and the backend running. Create a sale in POS, then scan the
+   payment QR in Wallet and approve the simulated split.
 
-On the POS, choose QR or NFC before creating the sale request. In the wallet,
-scan the POS QR or choose **Tap POS phone with NFC** and hold the unlocked
-phones together. Both phones need NFC enabled; the POS phone must support host
-card emulation. QR remains available if NFC is unsupported.
+The current demo uses QR codes for app loading and payment requests.
 
 For reference, the wallet configuration contains
 `EXPO_PUBLIC_API_URL=https://YOUR-CODESPACE-NAME-3000.app.github.dev`. Use a
@@ -73,19 +68,16 @@ The backend demo account starts with R50, R300, and R200. For a R60 sale, the
 wallet previews R50 from Demo Card 1 and R10 from Demo Card 2. Use **Reset demo
 balances** in the wallet to start the example over.
 
-## Installable Android APK
+## Optional standalone Android APK
 
-Create a custom NFC-capable development APK from this directory:
+Create a standalone Android APK from this directory:
 
 ```bash
 npx eas-cli build --platform android --profile development
 ```
 
-Install that APK on the wallet phone. Build/install the separate POS development
-APK from `../omniChargePOS`. Each custom app build is required because NFC uses
-native Android code, which Expo Go does not include. Use `npx eas-cli build
---platform android --profile preview` later to make a standalone release-style
-APK.
+Use the `preview` profile for a standalone APK. The QR-only demo can also be
+tested in Expo Go without a custom native development build.
 
 For local native builds, run `npx expo prebuild --platform android` and
 `npx expo run:android` from each app directory with Android Studio/SDK installed.

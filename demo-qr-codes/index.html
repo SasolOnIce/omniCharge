@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>omniCharge Demo QR Codes</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #18211f; background: #f2f6f2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 36px 20px; }
+    main { max-width: 960px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { margin: 0; color: #53615c; }
+    .codes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 28px; }
+    article { background: white; border: 1px solid #d8e1da; border-radius: 8px; padding: 20px; text-align: center; }
+    h2 { margin: 0; font-size: 18px; }
+    img { display: block; width: min(100%, 260px); aspect-ratio: 1; margin: 16px auto; image-rendering: pixelated; }
+    article p { font-size: 14px; line-height: 1.45; }
+    @media print { body { padding: 0; background: white; } .codes { gap: 8px; } article { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>omniCharge Demo QR Codes</h1>
+    <p>Scan each code with its corresponding installed development build.</p>
+    <section class="codes" aria-label="Demo QR codes">
+      <article>
+        <h2>Wallet App</h2>
+        <img src="wallet-dev.png" alt="Wallet development build QR code">
+        <p>Scan with the installed Wallet development build.</p>
+      </article>
+      <article>
+        <h2>POS App</h2>
+        <img src="pos-dev.png" alt="POS development build QR code">
+        <p>Scan with the installed POS development build.</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

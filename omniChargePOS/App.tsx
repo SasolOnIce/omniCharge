@@ -11,9 +11,6 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PosNfc from './modules/pos-nfc/src';
-
-type DeliveryMode = 'qr' | 'nfc';
 
 type Allocation = {
   cardId: string;
@@ -48,34 +45,8 @@ function formatRand(cents: number) {
 export default function App() {
   const [amount, setAmount] = useState('');
   const [paymentRequest, setPaymentRequest] = useState<PosRequest | null>(null);
-  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>('qr');
-  const [nfcAvailable, setNfcAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    try {
-      setNfcAvailable(PosNfc.isHostCardEmulationAvailable());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check POS NFC support.');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (paymentRequest?.status === 'pending' && deliveryMode === 'nfc') {
-      try {
-        PosNfc.setPaymentRequestId(paymentRequest.id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not prepare POS NFC tap mode.');
-      }
-    } else {
-      PosNfc.clearPaymentRequestId();
-    }
-
-    return () => {
-      PosNfc.clearPaymentRequestId();
-    };
-  }, [paymentRequest?.id, paymentRequest?.status, deliveryMode]);
 
   useEffect(() => {
     if (!paymentRequest || paymentRequest.status !== 'pending') return;
@@ -135,7 +106,6 @@ export default function App() {
   };
 
   const newSale = () => {
-    PosNfc.clearPaymentRequestId();
     setPaymentRequest(null);
     setAmount('');
     setError('');
@@ -152,23 +122,7 @@ export default function App() {
 
       {!paymentRequest ? (
         <View style={styles.panel}>
-          <Text style={styles.label}>Customer connection method</Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[styles.modeButton, deliveryMode === 'qr' && styles.modeButtonSelected]}
-              onPress={() => setDeliveryMode('qr')}>
-              <Text style={styles.modeText}>QR code</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modeButton, deliveryMode === 'nfc' && styles.modeButtonSelected]}
-              onPress={() => setDeliveryMode('nfc')}
-              disabled={!nfcAvailable}>
-              <Text style={[styles.modeText, !nfcAvailable && styles.disabledText]}>NFC tap</Text>
-            </TouchableOpacity>
-          </View>
-          {!nfcAvailable ? (
-            <Text style={styles.helperText}>NFC card emulation is unavailable on this device/build.</Text>
-          ) : null}
+          <Text style={styles.label}>QR payment</Text>
           <Text style={styles.label}>Sale amount (ZAR)</Text>
           <TextInput
             style={styles.input}
@@ -198,7 +152,7 @@ export default function App() {
                 ? 'REQUEST EXPIRED'
                 : 'WAITING FOR CUSTOMER'}
           </Text>
-          {paymentRequest.status === 'pending' && deliveryMode === 'qr' && paymentRequest.qrPayload ? (
+          {paymentRequest.status === 'pending' && paymentRequest.qrPayload ? (
             <>
               <View style={styles.qr}>
                 <QRCode value={paymentRequest.qrPayload} size={220} />
@@ -209,30 +163,6 @@ export default function App() {
               </Text>
               <ActivityIndicator style={styles.spinner} color="#38bdf8" />
             </>
-          ) : null}
-          {paymentRequest.status === 'pending' && deliveryMode === 'nfc' ? (
-            <>
-              <Text style={styles.instructions}>NFC request ready. Ask the customer to tap their unlocked phone here.</Text>
-              <Text style={styles.expiry}>
-                Keep the POS app open. Request expires at {new Date(paymentRequest.expiresAt).toLocaleTimeString()}.
-              </Text>
-              <ActivityIndicator style={styles.spinner} color="#38bdf8" />
-            </>
-          ) : null}
-          {paymentRequest.status === 'pending' ? (
-            <View style={styles.modeRow}>
-              <TouchableOpacity
-                style={[styles.modeButton, deliveryMode === 'qr' && styles.modeButtonSelected]}
-                onPress={() => setDeliveryMode('qr')}>
-                <Text style={styles.modeText}>Use QR instead</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modeButton, deliveryMode === 'nfc' && styles.modeButtonSelected]}
-                onPress={() => setDeliveryMode('nfc')}
-                disabled={!nfcAvailable}>
-                <Text style={[styles.modeText, !nfcAvailable && styles.disabledText]}>Use NFC tap</Text>
-              </TouchableOpacity>
-            </View>
           ) : null}
           {paymentRequest.allocation?.map((item) => (
             <Text key={item.cardId} style={styles.allocation}>
@@ -262,12 +192,6 @@ const styles = StyleSheet.create({
   buttonText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
   amount: { fontSize: 36, fontWeight: 'bold', color: '#f8fafc', textAlign: 'center' },
   status: { color: '#38bdf8', fontSize: 15, fontWeight: 'bold', textAlign: 'center', marginTop: 12 },
-  modeRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  modeButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#0f172a', alignItems: 'center' },
-  modeButtonSelected: { backgroundColor: '#075985' },
-  modeText: { color: '#f8fafc', fontWeight: '600' },
-  disabledText: { color: '#64748b' },
-  helperText: { color: '#fbbf24', fontSize: 12, marginBottom: 12 },
   qr: { backgroundColor: '#fff', padding: 14, alignSelf: 'center', marginTop: 24, borderRadius: 8 },
   instructions: { color: '#f8fafc', fontSize: 15, textAlign: 'center', marginTop: 20, lineHeight: 22 },
   expiry: { color: '#94a3b8', fontSize: 12, textAlign: 'center', marginTop: 12 },

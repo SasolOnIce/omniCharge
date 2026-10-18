@@ -12,7 +12,6 @@
     },
     "android": {
       "package": "com.omnicharge.mobile",
-      "permissions": ["android.permission.NFC"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -34,8 +33,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ],
-      "react-native-nfc-manager"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
